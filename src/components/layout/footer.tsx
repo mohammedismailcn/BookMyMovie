@@ -1,34 +1,27 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import { isBookingDestination, isShowtimeSeatsRoute, ROUTES } from "@/lib/constants/routes";
 import Link from "next/link";
 import Image from "next/image";
 import { Clapperboard, Camera, Play } from "lucide-react";
 
 const groups = [
   { title: "Discover", links: [["Now Showing", "/movies"], ["Upcoming Releases", "/movies/upcoming"], ["Exclusive Premieres", "/movies/premieres"], ["Gift Passes & Vouchers", "/gift-cards"]] },
-  { title: "24/7 Guest Support", links: [["Help Center & FAQs", "/help"], ["Instant Ticket Reschedule", "/bookings"], ["Accessibility Facilities", "/accessibility"], ["Corporate & Private Hire", "/corporate"]] },
+  { title: "Support", links: [["Help Center & FAQs", "/help"], ["Instant Ticket Reschedule", ROUTES.myBookings], ["Accessibility Facilities", "/accessibility"], ["Corporate & Private Hire", "/corporate"]] },
 ];
 
-export function FooterPartners() {
-  return (
-    <section aria-label="Premier screen partners" className="border-b border-white/5 bg-neutral text-neutral-foreground">
-      <div className="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-7 sm:flex-row sm:items-center sm:justify-between lg:px-8">
-        <h2 className="text-[10px] font-semibold uppercase tracking-wider">Premier Screen Partners</h2>
-        <ul className="flex flex-wrap gap-2">
-          {["IMAX with Laser", "Dolby Atmos", "4DX Immersive", "RealD 3D"].map((partner) => <li key={partner} className="rounded-full border border-white/15 bg-white/10 px-4 py-1 text-xs font-semibold">{partner}</li>)}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
 export function FooterMain() {
+  const pathname = usePathname();
+  const bookingFlow = isBookingDestination(pathname);
   return (
-    <section aria-label="Site information" className="bg-neutral text-neutral-foreground">
-      <div className="mx-auto grid max-w-7xl gap-9 px-5 py-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-12 lg:px-8">
+    <section aria-label="Site information" className={`bg-neutral text-neutral-foreground ${isShowtimeSeatsRoute(pathname) ? "pb-36" : ""}`}>
+      {!bookingFlow && <div className="mx-auto grid max-w-7xl gap-9 px-5 py-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-12 lg:px-8">
         <div>
           <Link href="/" aria-label="BookMyMovie home" className="inline-block rounded-lg bg-white px-2">
-            <Image src="/assets/text_logo.png" alt="BookMyMovie" width={2172} height={724} className="h-auto w-52" />
+            <Image src="/assets/text_logo.png" alt="BookMyMovie" width={2172} height={724} sizes="(min-width: 640px) 176px, 144px" className="h-auto w-36 max-w-full sm:w-44" />
           </Link>
-          <p className="mt-3 max-w-64 text-xs leading-6 text-slate-200">Your Movie. Your Seat. Your Experience.<br />Curating premium boutique cinema outings with instantaneous spatial seat reservation and seamless boarding-pass ticketing.</p>
+          <p className="mt-3 max-w-64 text-xs leading-6 text-slate-200">BookMyMovie · Movie and theater booking demo.</p>
         </div>
         {groups.map((group) => (
           <div key={group.title}>
@@ -47,7 +40,7 @@ export function FooterMain() {
             ))}
           </div>
         </div>
-      </div>
+      </div>}
       <div className="border-t border-white/5">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-5 text-[10px] text-slate-200 md:flex-row md:items-center md:justify-between lg:px-8">
           <p>© {new Date().getFullYear()} BookMyMovie Entertainment Technologies Inc. All rights reserved.</p>
@@ -61,5 +54,5 @@ export function FooterMain() {
 }
 
 export function Footer() {
-  return <footer><FooterPartners /><FooterMain /></footer>;
+  return <footer><FooterMain /></footer>;
 }

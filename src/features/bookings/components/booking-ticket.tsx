@@ -1,0 +1,13 @@
+import { CheckCircle2, MapPin, Ticket } from "lucide-react";
+import { MoviePoster } from "@/features/movies/components/movie-poster";
+import type { MockBooking } from "@/features/bookings/types/booking-types";
+
+const date = new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
+const money = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" });
+
+export function BookingTicket({ booking }: { booking: MockBooking }) {
+  return <article className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+    <div className="flex items-start gap-4 p-5 sm:gap-6 sm:p-7"><div className="relative aspect-[2/3] w-20 shrink-0 overflow-hidden rounded-lg sm:w-28"><MoviePoster movie={{ title: booking.movie_title, poster_url: booking.poster_url }} /></div><div className="min-w-0 flex-1"><p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-tertiary/10 px-2 py-1 text-[10px] font-semibold text-tertiary"><CheckCircle2 className="size-3" aria-hidden="true" />{booking.status}</p><h2 className="text-xl font-semibold sm:text-2xl">{booking.movie_title}</h2><p className="mt-2 text-sm font-medium">{booking.theater_name} · {booking.screen_name}</p><p className="mt-2 flex items-start gap-1 text-xs leading-5 text-muted-foreground"><MapPin className="mt-0.5 size-3 shrink-0" aria-hidden="true" />{booking.theater_location}</p></div></div>
+    <dl className="grid gap-5 border-t border-dashed p-5 text-sm sm:grid-cols-2 sm:p-7"><div><dt className="text-xs text-muted-foreground">Booking number</dt><dd className="mt-1 break-all font-mono text-xs font-semibold">{booking.booking_number}</dd></div><div><dt className="text-xs text-muted-foreground">Showtime</dt><dd className="mt-1 font-medium">{date.format(new Date(booking.starts_at))} IST</dd></div><div><dt className="flex items-center gap-1 text-xs text-muted-foreground"><Ticket className="size-3" aria-hidden="true" />Seats ({booking.seat_ids.length})</dt><dd className="mt-1 font-medium">{booking.seat_details.map((seat) => seat.label).join(", ")}</dd></div><div><dt className="text-xs text-muted-foreground">Total amount</dt><dd className="mt-1 text-xl font-semibold text-primary">{money.format(booking.total_amount)}</dd></div><div className="sm:col-span-2"><dt className="text-xs text-muted-foreground">Booked on</dt><dd className="mt-1 text-xs">{date.format(new Date(booking.created_at))} IST</dd></div></dl>
+  </article>;
+}

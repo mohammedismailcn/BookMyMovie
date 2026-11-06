@@ -1,0 +1,10 @@
+import { authDestination } from "@/lib/constants/routes";
+import type { Metadata } from "next";
+import { AuthShell } from "@/features/auth/components/auth-shell";
+import { AuthForm } from "@/features/auth/components/auth-form";
+export const metadata: Metadata = { title: "Welcome back | BookMyMovie" };
+export default async function Page({ searchParams }: { searchParams: Promise<{ next?: string | string[] }> }) {
+  const params = await searchParams;
+  const returnTo = authDestination(typeof params.next === "string" ? params.next : null);
+  return <AuthShell title="Welcome back"><AuthForm mode="login" returnTo={returnTo} /></AuthShell>;
+}
