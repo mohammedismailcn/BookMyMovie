@@ -55,9 +55,10 @@ Homepage screening configuration, artwork, benefits, upcoming-release previews, 
 
 Import individual collections from the existing feature paths or the complete fixture set from `@/lib/mock-data`. The supplied snake_case fields and short IDs are retained for fixture compatibility; these are not database seed records or UUIDs.
 
-The fixtures contain 8 movies, 3 theaters, 6 screens, generated physical seats and showtime inventory, 10 showtimes, 5 reference users, 3 bookings, relational booking-seat assignments, and 3 mock payments. Reference users are separate from demo authentication accounts and have no passwords. No fixture data is written to a database or localStorage, and no other user's bookings are displayed by the authentication UI.
-
-Booking assignments override generated seat occupancy. Booking `b3` includes a second standard seat (`sh5-s5-C6`) so its seat price snapshots match its supplied total of 420. Generated holds expire 15 minutes before their own showtime; pending booking holds use the booking expiry. Use `resolveShowSeatAvailability(show_seats, new Date())` from `@/features/showtimes/services/show-seat-availability` for current availability instead of reading raw fixture hold status. Passing an explicit date makes historical demos repeatable. The showtimes remain on November 7–8, 2026 as supplied; movie poster paths reference assets that have not been provided.
+The fixtures provide the default movie/venue catalog, generated physical seats and inventory,
+reference users, bookings, booking-seat price snapshots, and mock payments. Current fixture
+sizes and dates are described below. Reference users have no passwords and are separate
+from mock Auth accounts. Customer history is filtered by Auth ID.
 
 ## Dynamic mock homepage
 
@@ -92,7 +93,7 @@ The fixture validator expects raw pending holds to be future at that evaluation 
 runtime availability always resolves expired holds using the actual request/browser clock.
 
 For the larger dataset, the home page omits seat inventory; movie and seat pages scope it to
-the selected movie. Browser utilities do not import or regenerate the full mock database.
+the selected movie. The shared browser store loads the catalog locally so evaluator changes also work on customer pages.
 
 Booking discovery displays seven calendar days beginning with the earliest upcoming demo
 show. The underlying 14-day fixtures remain available for integrity checks. Book Tickets
@@ -110,8 +111,8 @@ previous values; blocked storage is reported with retry feedback.
 ## Browser-only booking confirmation
 
 `Confirm Booking` rechecks the authenticated mock user, showtime, seat inventory, and all
-confirmed browser bookings before saving. `bookmymovie_bookings` is the only booking key;
-seat availability is derived by overlaying its confirmations onto the read-only show inventory.
+confirmed browser bookings before saving. `bookmymovie_mock_data` is the shared catalog and booking key;
+seat availability is derived from its confirmed bookings plus independent seeded occupancy.
 No separate availability key or payment record is written. Booking records include immutable
 movie/venue/showtime details and seat-price snapshots, so success pages and My Bookings
 remain readable after the fixed discovery dates pass. History is filtered by the existing Auth
@@ -127,3 +128,48 @@ write failures leave the booking unconfirmed. No gateway or payment integration 
 
 Run `npm run validate:bookings` for behavioral checks covering confirmation, seat conflicts,
 per-show availability, idempotent/competing requests, persistence and storage/session errors.
+
+
+## Evaluator dashboard: `/dev/mock-data`
+
+Open `/dev/mock-data` without signing in. The Movies, Theaters, Screens, Showtimes,
+Seats, Bookings and Mock Users tables support search, filtering, pagination and record
+forms. Nested screen layout arrays use validated JSON fields. IDs cannot change on edit.
+Foreign references, dimensions, prices, dates/timezones, overlapping active shows,
+seat ownership, duplicate confirmations and booking totals are validated before saving.
+Deleting referenced records is blocked; remove dependents explicitly first. Destructive
+operations require confirmation. Screen capacity follows the physical seat records.
+New screens start with zero seats; add physical seats in the Seats tab. New showtime
+inventory is generated from those seats and the show's base price (premium +50,
+recliner +120). Customer discovery retains its upcoming one-week window.
+
+`src/features/mock-data` owns the versioned persistence, validation, editing operations,
+inventory derivation, provider and UI. The original `src/lib/mock-data.ts` constants are
+unchanged defaults. The store holds the seven editable collections, not the large generated
+show-seat table. Booking-seat snapshots from the static defaults are adapted into the
+existing browser ticket type. Independent seeded booked/held inventory stays intact;
+booking-owned inventory is derived only from current CONFIRMED bookings. Cancelling or
+deleting one releases its assignments. Pending, expired and cancelled bookings do not
+reserve seats. The legacy `bookmymovie_bookings` key is read only when the new key is
+missing; existing confirmations are migrated into the shared dataset on its first write.
+The old key is retained as a recovery copy and is never read after a shared store exists.
+
+Mock Users are reference profiles, not login accounts. Existing Auth IDs are reused and
+registered when a customer confirms a booking. Editing reference profiles does not alter
+passwords, sessions or Auth UI. Payments remain unchanged static fixtures and are not
+created by this dashboard or by booking confirmation. Ticket details/prices are snapshots;
+changing catalog metadata does not retroactively rewrite already saved customer tickets.
+Server metadata uses defaults because browser storage is unavailable to the server.
+
+Export JSON downloads a versioned full editable dataset. Import JSON validates the complete
+export before asking to replace the current store. Export a backup before import/reset.
+Malformed or unsupported versions are never silently overwritten: use recovery export,
+then explicitly reset or import a compatible export. Reset replaces evaluator changes and
+browser bookings with the original defaults, preserving login accounts and seat preferences.
+Quota/write errors preserve the old store. Web Locks serialize same-origin tab mutations
+where supported; without Web Locks, cross-tab atomicity is not guaranteed. This is browser-
+local demo data only, not a production admin system or cross-browser synchronization.
+
+Run `npm run validate:mock-dashboard` and `npm run validate:bookings` for behavioral checks.
+The original static-fixture validator currently reports its pre-existing m2 repeat-daily-show
+assertion; the dashboard does not modify those seed constants or weaken that validator.

@@ -1,4 +1,5 @@
 export const ROUTES = {
+  mockData: "/dev/mock-data",
   home: "/", login: "/login", signup: "/signup", forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
   profile: "/profile", myBookings: "/my-bookings", bookings: "/bookings", checkout: "/checkout",

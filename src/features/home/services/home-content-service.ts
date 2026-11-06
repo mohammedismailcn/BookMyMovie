@@ -1,14 +1,11 @@
 import { localShowDate } from "@/features/home/services/home-content-utils";
-import { movies } from "@/features/movies/mocks/movies";
-import { theaters } from "@/features/theaters/mocks/theaters";
-import { screens } from "@/features/screens/mocks/screens";
-import { seats } from "@/features/seats/mocks/seats";
-import { showtimes } from "@/features/showtimes/mocks/showtimes";
-import { show_seats } from "@/features/showtimes/mocks/show-seats";
+import { DEFAULT_MOCK_DATABASE, type MockDatabase } from "@/features/mock-data/types/mock-database";
+import { buildMockInventory } from "@/features/mock-data/services/mock-inventory";
 import { resolveShowSeatAvailability } from "@/features/showtimes/services/show-seat-availability";
 
-/** Join read-only fixtures once on the server; never authorizes a booking. */
-export function getHomeContent(now: Date, scope: { movieId?: string; showtimeId?: string; includeInventory?: boolean } = {}) {
+/** Join the supplied browser dataset, or default fixtures for server previews. Never authorizes a booking. */
+export function getHomeContent(now: Date, scope: { movieId?: string; showtimeId?: string; includeInventory?: boolean } = {}, database: MockDatabase = DEFAULT_MOCK_DATABASE) {
+  const { movies, theaters, screens, seats, showtimes } = database;
   const movieId = scope.movieId ?? (scope.showtimeId ? showtimes.find((show) => show.id === scope.showtimeId)?.movie_id : undefined);
   const futureShows = showtimes.filter((show) => show.is_active && Date.parse(show.starts_at) > now.getTime());
   const firstStart = Math.min(...futureShows.map((show) => Date.parse(show.starts_at)));
@@ -39,7 +36,7 @@ export function getHomeContent(now: Date, scope: { movieId?: string; showtimeId?
       capacity: seats.filter((seat) => screens.some((screen) => screen.id === seat.screen_id && screen.theater_id === theater.id && screen.is_active)).length,
     })),
     shows, cities, dates,
-    inventory: scope.includeInventory === false ? [] : resolveShowSeatAvailability(show_seats.filter((seat) => showIds.has(seat.showtime_id)), now),
+    inventory: scope.includeInventory === false ? [] : resolveShowSeatAvailability(buildMockInventory(database, showIds), now),
     seats: scope.includeInventory === false ? [] : seats.filter((seat) => screenIds.has(seat.screen_id)),
   };
 }

@@ -1,6 +1,6 @@
 export type BookingSeatSnapshot = { seat_id: string; label: string; price: number };
 
-/** Browser-only confirmed ticket. Display/price snapshots survive catalog changes. */
+/** Browser-only booking. Display/price snapshots survive catalog changes. */
 export type MockBooking = {
   id: string;
   booking_number: string;
@@ -12,7 +12,7 @@ export type MockBooking = {
   seat_ids: string[];
   seat_details: BookingSeatSnapshot[];
   total_amount: number;
-  status: "CONFIRMED";
+  status: "CONFIRMED" | "CANCELLED" | "PENDING_PAYMENT" | "EXPIRED";
   created_at: string;
   starts_at: string;
   movie_title: string;

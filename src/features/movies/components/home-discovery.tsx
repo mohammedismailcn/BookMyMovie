@@ -32,14 +32,14 @@ export function HomeDiscovery({ movies, featuredMovies, dates, cities, hub, date
   }
 
   return <>
-    {featured && <section aria-label="Featured movie" aria-roledescription="carousel" className="relative isolate flex min-h-[460px] items-end overflow-hidden rounded-xl bg-neutral text-white shadow-sm sm:min-h-[520px] lg:min-h-[560px]">
+    {featured && <section aria-label="Featured movie" aria-roledescription="carousel" className="relative isolate flex min-h-[420px] items-end overflow-hidden rounded-xl bg-neutral text-white shadow-sm sm:min-h-[520px] lg:min-h-[560px]">
       <Image src={featured.poster_url} alt={`${featured.title} featured artwork`} fill priority sizes="(min-width: 1280px) 1216px, 100vw" className="-z-20 object-cover object-[60%_center] opacity-55" />
-      <div className="w-full px-6 pb-20 pt-28 sm:px-10 sm:pb-12 lg:px-12 lg:pb-12">
+      <div className="w-full px-5 pb-20 pt-20 sm:px-10 sm:pb-12 lg:px-12 lg:pb-12">
         <div className="max-w-xl space-y-4">
           <div className="flex flex-wrap items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wide sm:text-[10px]">
             {[featured.language, ...featured.genre.split(", ")].map((badge) => <span key={badge} className="rounded-full bg-white/15 px-2 py-1">{badge}</span>)}
           </div>
-          <div><h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">{featured.title}</h1>
+          <div><h1 className="text-3xl font-bold tracking-tight sm:text-5xl lg:text-6xl">{featured.title}</h1>
             <p className="mt-3 max-w-lg text-sm leading-6 text-slate-200">{featured.description}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-200">
@@ -53,9 +53,9 @@ export function HomeDiscovery({ movies, featuredMovies, dates, cities, hub, date
           </div>
         </div>
       </div>
-      <div className="absolute bottom-5 right-6 flex items-center gap-3 sm:bottom-6 sm:right-8" aria-label="Featured experience controls">
+      <div className="absolute bottom-4 right-5 flex items-center gap-3 sm:bottom-6 sm:right-8" aria-label="Featured experience controls">
         <Button size="icon" onClick={() => setExperience((experience + featuredMovies.length - 1) % featuredMovies.length)} aria-label="Previous featured experience" className="rounded-full bg-white/15 text-white hover:bg-white/25"><ArrowLeft aria-hidden="true" /></Button>
-        <div className="flex gap-1.5">{featuredMovies.map(({ title: label }, index) => <button key={label} type="button" aria-label={label} aria-pressed={experience === index} onClick={() => setExperience(index)} className="flex h-8 items-center px-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"><span className={cn("h-1.5 rounded-full bg-white/35 transition-all", experience === index ? "w-6 bg-primary" : "w-1.5")} /></button>)}</div>
+        <div className="flex gap-1.5">{featuredMovies.map(({ title: label }, index) => <button key={label} type="button" aria-label={label} aria-pressed={experience === index} onClick={() => setExperience(index)} className="flex h-11 items-center px-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"><span className={cn("h-1.5 rounded-full bg-white/35 transition-all", experience === index ? "w-6 bg-primary" : "w-1.5")} /></button>)}</div>
         <Button size="icon" onClick={() => setExperience((experience + 1) % featuredMovies.length)} aria-label="Next featured experience" className="rounded-full bg-white/15 text-white hover:bg-white/25"><ArrowRight aria-hidden="true" /></Button>
       </div>
     </section>}

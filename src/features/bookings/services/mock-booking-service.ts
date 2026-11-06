@@ -4,7 +4,8 @@ import type { HomeContent } from "@/features/home/services/home-content-service"
 import { getPreviewSeats, localShowDate } from "@/features/home/services/home-content-utils";
 import { getShowAvailability } from "@/features/showtimes/services/showtime-discovery";
 import { applyConfirmedBookings } from "@/features/bookings/services/booking-availability";
-import { MOCK_BOOKINGS_CHANGED, MOCK_BOOKINGS_KEY, parseMockBookings, readMockBookings } from "@/features/bookings/services/mock-booking-store";
+import { updateMockDatabase } from "@/features/mock-data/services/mock-data-store";
+import { getHomeContent } from "@/features/home/services/home-content-service";
 import type { MockBooking } from "@/features/bookings/types/booking-types";
 
 export type ConfirmBookingInput = { requestId: string; showtimeId: string; seatIds: readonly string[] };
@@ -14,7 +15,7 @@ export function createConfirmedBooking(content: HomeContent, existing: readonly 
   if (!Number.isFinite(at.getTime()) || !/^[a-zA-Z0-9-]{8,80}$/.test(input.requestId)) throw new Error("Unable to identify this booking request. Please try again.");
   const duplicate = existing.find((booking) => booking.id === input.requestId);
   if (duplicate) {
-    if (duplicate.user_id === user.id && duplicate.showtime_id === input.showtimeId && [...duplicate.seat_ids].sort().join("|") === [...input.seatIds].sort().join("|")) return duplicate;
+    if (duplicate.status === "CONFIRMED" && duplicate.user_id === user.id && duplicate.showtime_id === input.showtimeId && [...duplicate.seat_ids].sort().join("|") === [...input.seatIds].sort().join("|")) return duplicate;
     throw new Error("This booking request has already been used.");
   }
   if (!input.seatIds.length || input.seatIds.length > 6 || new Set(input.seatIds).size !== input.seatIds.length) throw new Error("Choose between 1 and 6 different seats.");
@@ -36,20 +37,19 @@ export function createConfirmedBooking(content: HomeContent, existing: readonly 
 }
 
 /** One synchronous read/check/write under a same-browser Web Lock when supported. No server authorization. */
-export async function confirmMockBooking(content: HomeContent, input: ConfirmBookingInput): Promise<MockBooking> {
-  const commit = async () => {
-    const user = await authService.getCurrentUser();
-    if (!user) throw new Error("Your session has ended. Please log in again.");
-    const existing = readMockBookings();
-    const booking = createConfirmedBooking(content, existing, user, input, new Date());
-    if (existing.some((item) => item.id === booking.id)) return booking;
-    const updated = [...existing, booking];
-    parseMockBookings(JSON.stringify(updated));
-    try { window.localStorage.setItem(MOCK_BOOKINGS_KEY, JSON.stringify(updated)); }
-    catch { throw new Error("Could not save your booking. No confirmation was created. Check browser storage and try again."); }
-    window.dispatchEvent(new Event(MOCK_BOOKINGS_CHANGED));
-    return booking;
-  };
-  if (typeof navigator !== "undefined" && navigator.locks) return navigator.locks.request(MOCK_BOOKINGS_KEY, commit);
-  return commit();
+export async function confirmMockBooking(input: ConfirmBookingInput): Promise<MockBooking> {
+  const user = await authService.getCurrentUser();
+  if (!user) throw new Error("Your session has ended. Please log in again.");
+  let result: MockBooking | undefined;
+  await updateMockDatabase(database => {
+    const at = new Date();
+    const current = getHomeContent(at, { showtimeId: input.showtimeId }, database);
+    const booking = createConfirmedBooking(current, database.bookings, user, input, at);
+    result = booking;
+    if (database.bookings.some(item => item.id === booking.id)) return database;
+    const users = database.users.some(item => item.id === user.id) ? database.users : [...database.users, { id: user.id, name: user.name, email: user.email, created_at: user.createdAt }];
+    return { ...database, users, bookings: [...database.bookings, booking] };
+  });
+  if (!result) throw new Error("Unable to confirm booking.");
+  return result;
 }

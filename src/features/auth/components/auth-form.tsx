@@ -8,7 +8,7 @@ import { DEMO_ACCOUNT } from "@/features/auth/services/mock-auth-adapter";
 import { authService } from "@/features/auth/services/auth-service";
 import { ROUTES, authDestination, loginRoute, signupRoute, isBookingDestination } from "@/lib/constants/routes";
 
-export const FIELD_CLASS = "mt-2 w-full min-w-0 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring";
+export const FIELD_CLASS = "mt-2 w-full min-w-0 rounded-lg border bg-background min-h-11 px-3 py-2 text-base sm:text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring";
 export function AuthForm({ mode, initialError = "", returnTo = ROUTES.profile }: { returnTo?: string; mode: "login" | "signup" | "forgot"; initialError?: string }) {
   const auth = useAuth();
   const router = useRouter();

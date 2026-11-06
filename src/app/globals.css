@@ -51,6 +51,22 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+@media (max-width: 639px) {
+  /* Keep text entry readable without triggering mobile browser zoom. */
+  input:not([type="radio"]):not([type="checkbox"]),
+  select,
+  textarea {
+    min-height: 2.75rem;
+    font-size: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+}
+
 :root {
     --background: oklch(1 0 0);
     --foreground: #1e293b;

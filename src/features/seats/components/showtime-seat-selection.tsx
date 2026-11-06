@@ -77,7 +77,7 @@ export function ShowtimeSeatSelection({ content, show }: { content: HomeContent;
     try {
       const signature=`${user.id}:${show.id}:${[...selectedIds].sort().join("|")}`;
       if(requestRef.current?.signature!==signature)requestRef.current={signature,id:crypto.randomUUID()};
-      const booking=await confirmMockBooking(content,{requestId:requestRef.current.id,showtimeId:show.id,seatIds:selectedIds});
+      const booking=await confirmMockBooking({requestId:requestRef.current.id,showtimeId:show.id,seatIds:selectedIds});
       router.push(bookingSuccessRoute(booking.id));
     } catch(cause) {setMessage(cause instanceof Error?cause.message:"Unable to confirm booking. Please try again.");}
     finally {submittingRef.current=false;setSubmitting(false);}

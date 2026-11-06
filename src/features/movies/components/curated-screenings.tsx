@@ -32,8 +32,8 @@ export function CuratedScreenings({ movies, onChooseMovie, horizontal = false, c
           <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent" />
           <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded bg-neutral/80 px-1.5 py-1 text-[9px] text-white"><Clock3 aria-hidden="true" className="size-2.5" />{movie.duration_minutes}m</span>
         </button>
-        <div className="p-2.5 sm:p-3"><h3 className="truncate text-xs font-semibold sm:text-sm" title={movie.title}><button type="button" onClick={() => onChooseMovie(movie)} className="max-w-full truncate text-left hover:text-primary focus-visible:outline-2 focus-visible:outline-ring">{movie.title}</button></h3><p className="mt-1 truncate text-[9px] text-muted-foreground sm:text-[10px]" title={`${movie.genre} · ${movie.language}`}>{movie.genre} · {movie.language}</p>
-          <BookingButton destination={movieTheatersRoute(movie.id, city, date)} aria-label={`Book tickets for ${movie.title}`} className="mt-3 h-9 w-full rounded-md px-2 text-[10px] text-white sm:text-xs">Book Tickets</BookingButton>
+        <div className="p-2.5 sm:p-3"><h3 className="text-sm font-semibold sm:text-sm" title={movie.title}><button type="button" onClick={() => onChooseMovie(movie)} className="min-h-10 max-w-full line-clamp-2 text-left hover:text-primary focus-visible:outline-2 focus-visible:outline-ring">{movie.title}</button></h3><p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground sm:text-[11px]" title={`${movie.genre} · ${movie.language}`}>{movie.genre} · {movie.language}</p>
+          <BookingButton destination={movieTheatersRoute(movie.id, city, date)} aria-label={`Book tickets for ${movie.title}`} className="mt-3 h-9 w-full rounded-md px-2 text-xs text-white">Book Tickets</BookingButton>
         </div>
       </li>)}
     </ul>

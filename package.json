@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "validate:mock": "node scripts/validate-mock-data.mjs",
+    "validate:mock-dashboard": "node scripts/validate-mock-dashboard.mjs",
     "validate:bookings": "node scripts/validate-bookings.mjs"
   },
   "dependencies": {
