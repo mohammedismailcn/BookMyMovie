@@ -1,175 +1,290 @@
 # BookMyMovie
 
-Next.js App Router starter with TypeScript, Tailwind CSS, and shadcn/ui.
+A smart theater seat-booking demo built with Next.js and React. Discover movies, choose a theater and showtime, compare seats using personal preferences, and confirm a mock booking.
 
-## Development
+The project uses **Feature-Based Architecture** for code organization and a **rule-based weighted scoring algorithm** for seat recommendations.
 
-Use Node.js 22 LTS or newer and npm.
+> **Assignment scope:** Authentication, bookings, inventory, and persistence are browser-local demonstrations. No database connection, backend booking service, Supabase Auth, or payment gateway is required. Confirming a booking does not collect money or reserve a real cinema seat.
 
-```sh
-npm install
+## Design references
+
+| Reference | Link |
+| --- | --- |
+| UI design — Google Stitch | [BookMyMovie UI design](https://stitch.withgoogle.com/projects/17885167767798000086) |
+| Database design — Eraser | [BookMyMovie database design](https://app.eraser.io/workspace/22LYg1CGNTgJa7ws8NJq?origin=share) |
+
+These are the supplied project design references. Access depends on the sharing permissions of each service. The database diagram describes the intended relational design; the current application runs on static seeds and browser-local mock data.
+
+## Quick start
+
+**Prerequisites:** Node.js 22 LTS or newer, npm, and a modern browser with localStorage enabled.
+
+```bash
+npm ci
 npm run dev
 ```
 
-Open http://localhost:3000. Edit `src/app/page.tsx` to start building.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Checks and production
+No environment variables, API keys, database setup, or payment credentials are needed for the mock application. Use the same browser profile and origin throughout the review so saved accounts and bookings remain available.
 
-```sh
-npm run lint
-npm run typecheck
+For a production build:
+
+```bash
 npm run build
 npm start
 ```
 
-## UI components
+### Demo login
 
-```sh
-npx shadcn@latest add button
+| Field | Value |
+| --- | --- |
+| Email | `demo@bookmymovie.com` |
+| Password | `Demo123!` |
+
+You can also create a mock account through `/signup`. Use a sample password, never a real one. Mock accounts and sessions are editable browser data and do not provide production security or server-side authorization.
+
+## Suggested reviewer walkthrough
+
+1. **Discover:** Open `/`, choose a city and date, and use **Find Shows** to open filtered results at `/movies`.
+2. **Choose a show:** Open a movie to see its details, available theaters, screens, dates, prices, and showtimes.
+3. **Sign in:** Booking actions require the existing mock login. Booking-initiated login returns to the selected destination.
+4. **Choose seats:** Set the number of seats, adjust recommendation priorities, and compare the solid-green recommended group. Mobile preferences expand from a dropdown; the seat map supports swiping and arrow controls.
+5. **Confirm:** Select available seats and use the fixed **Confirm Booking** bar. The total comes from the selected show's inventory prices.
+6. **Verify persistence:** Review the confirmation page and `/my-bookings`, refresh, then reopen the same show. Confirmed seats remain unavailable.
+7. **Evaluate data management:** Open `/dev/mock-data`, edit a movie, and verify the customer page reflects the change. Cancel a booking and verify its seats become available again; independent seeded occupancy remains intact.
+8. **Review recovery:** Export JSON before experimenting with import or reset. Referenced records cannot be deleted until their dependents are removed.
+
+**Schedule note:** Default showtimes use fixed dates, **7–20 November 2026**, in **Asia/Kolkata (IST)**. Discovery displays seven calendar days beginning with the earliest upcoming demo show. The schedule does not automatically roll forward. If reviewing later, create future showtimes in `/dev/mock-data`; past shows are intentionally unavailable.
+
+## Implemented features
+
+- Movie discovery, title/language/genre search, city/date filtering, and movie details.
+- Theater and screen selection with showtime-specific prices and availability.
+- Screen-driven seat layouts, seat types, exits, speaker positions, and legroom configuration.
+- Adjacent-seat recommendations based on five adjustable preferences.
+- Mock signup, login, logout, profile editing, persisted sessions, and client route guards.
+- Per-user seat preferences, available after normal login or through **My Preferences** in the account menu.
+- Browser-local booking confirmation, booking details, and user-specific booking history.
+- Responsive mobile, tablet, and desktop layouts, including a fixed booking action bar.
+- An evaluator dashboard for managing the shared mock dataset.
+
+Forgot password provides simulated feedback only: it sends no email and changes no password. A custom signed-in mock account can change its demo password through `/reset-password`; the shared demo credentials are reserved.
+
+## Technology stack
+
+| Area | Implementation |
+| --- | --- |
+| Framework | Next.js 16, App Router |
+| UI | React 19, TypeScript in strict mode |
+| Styling | Tailwind CSS 4, project theme tokens, Poppins |
+| Components | shadcn/ui button primitive built on Base UI; Base UI dialogs |
+| Icons | Lucide React |
+| State | React context, hooks, and `useSyncExternalStore` |
+| Persistence | Versioned localStorage mock dataset |
+| Checks | ESLint, TypeScript, production build, Node-based behavioral validators |
+| Intended database architecture | PostgreSQL with Prisma — not installed or required by this demo |
+
+Exact dependency ranges and available commands are defined in [package.json](package.json).
+
+## Code organization: Feature-Based Architecture
+
+The application is organized by business capability. Each feature owns its relevant components, types, services, validation, and mock adapters. App Router pages define routes and compose feature components; shared navigation and UI primitives remain outside individual features.
+
+```text
+src/
+├── app/                         # App Router pages, layout, metadata, global styles
+│   ├── (account)/               # Profile, history, booking confirmation, password pages
+│   ├── dev/mock-data/           # Public demo/evaluator dashboard
+│   ├── movies/                  # Listing and movie/theater selection routes
+│   └── showtimes/               # Protected seat-selection route
+├── components/
+│   ├── layout/                  # Navbar and footer
+│   └── ui/                      # Reusable UI primitives
+├── features/
+│   ├── auth/                    # Mock Auth adapter, context, forms, route gate
+│   ├── bookings/                # Confirmation, validation, snapshots, history
+│   ├── home/                    # Customer content composition and joins
+│   ├── mock-data/               # Shared store, integrity checks, editor, provider
+│   ├── movies/                  # Discovery, filters, cards, movie details
+│   ├── recommendations/         # Feature scores, weighted ranking, preferences
+│   ├── screens/                 # Screen layout types and seed re-exports
+│   ├── seats/                   # Seat map and booking interaction
+│   ├── showtimes/               # Discovery and availability calculations
+│   ├── theaters/                # Venue presentation and seed re-exports
+│   ├── payments/                # Static mock fixtures; no payment processing
+│   └── users/                   # Static reference profiles
+└── lib/
+    ├── constants/routes.ts      # Shared route constants and dynamic path builders
+    ├── mock-data.ts             # Original static table seeds
+    └── utils.ts                 # Shared class-name utility
+
+public/                          # Local logos, posters, and fallback artwork
+scripts/                         # Behavioral and fixture validation scripts
 ```
 
-Components live in `src/components/ui`, shared utilities in `src/lib`, and theme tokens in `src/app/globals.css`. The `@/` alias resolves to `src/`.
+**Data flow:** route → feature component → feature service/shared mock store → validated browser data. Recommendation calculations remain pure functions. Browser APIs stay in client-side boundaries; no server code treats the mock session as authorization.
 
-See [AGENTS.md](AGENTS.md) for development conventions.
+Project conventions are maintained in the local `AGENTS.md` instructions.
 
-## Mock authentication
+### Main routes
 
-Auth is browser-local and explicitly demo-only. No Supabase configuration, database connection, or outgoing email is required.
+| Route | Purpose | Mock login required? |
+| --- | --- | --- |
+| `/` | Home and discovery | No |
+| `/movies` | Search/filter results | No |
+| `/movies/[movieId]/theaters` | Movie details, theaters, dates, showtimes | No to browse; booking actions prompt login |
+| `/showtimes/[showtimeId]/seats` | Seat selection and confirmation | Yes |
+| `/bookings/[bookingId]/success` | Saved booking details/current status | Yes; filtered by user ID |
+| `/my-bookings` | Current user's browser-local history | Yes |
+| `/profile` | Mock account profile | Yes |
+| `/login`, `/signup`, `/forgot-password` | Mock authentication pages | No |
+| `/reset-password` | Change a custom account's demo password | Yes |
+| `/dev/mock-data` | Evaluator data management | No |
 
-- Demo email: `demo@bookmymovie.com`
-- Demo password: `Demo123!`
+The navigation also contains links for future areas such as offers and theater directories; those standalone pages are not implemented. Use the routes above for the assignment review.
 
-The existing `AuthAdapter`, context, forms, and client route gate use `mock-auth-adapter.ts`. Signup logs in immediately; the session survives reloads and updates across tabs. Passwords are stored as salted Web Crypto PBKDF2 verifiers, never plaintext. This does not make browser-editable mock authentication secure. Use sample passwords only.
+## Recommendation: Rule-based weighted scoring algorithm
 
-Profile changes persist in browser storage. The shared demo email and password are reserved. Forgot password only validates input and displays simulated feedback: no email is sent and no credentials are changed. A signed-in custom demo account can change its own demo password at `/reset-password`.
+The engine ranks available groups of **1–6 adjacent seats** using the screen's own physical coordinates and configuration. It uses deterministic rules, not machine learning.
 
-`AuthGate` redirects signed-out visitors to login and hides protected UI during initialization. It is a UI demonstration, not server authorization. Do not use mock user IDs to authorize sensitive operations. Booking reference profiles and all other feature mock data remain unchanged. Clearing this site's browser storage resets demo accounts.
+### Seat feature scores
 
-## Feature mock data
+Each available criterion produces a score from 0 to 100:
 
-**Edit database table mock records in `src/lib/mock-data.ts`.** It contains movies, theaters, screens, seats, showtimes, show-seat inventory, users, bookings, booking-seat assignments, and payments. Table feature mock files re-export the same records to preserve existing imports.
+| Criterion | Rule used by the implementation |
+| --- | --- |
+| Center view | Penalizes horizontal distance from configured center columns and distance from an ideal viewing depth, approximately 60% of the screen's maximum row depth. |
+| Extra legroom | Normalizes the seat's `legroom_cm` against the maximum legroom on that screen. |
+| Balanced sound | Prefers more even distances to configured speakers and penalizes seats extremely close to a speaker. |
+| Quick exit | Scores proximity to the nearest configured exit, normalized by the auditorium diagonal. |
+| Quiet zone | Favors distance from nearby speakers and exits, used as heuristic noise/traffic sources. |
 
-Seats and showtime inventory are generated from the screen/showtime configurations in that file. Preserve IDs referenced by other tables and keep booking-seat snapshots aligned with booking/payment totals.
+Sound and quiet scores are geometry-based estimates, not measured acoustics or noise levels. Criteria that cannot be calculated from the screen configuration are omitted from the weighted calculation.
 
-Homepage screening configuration, artwork, benefits, upcoming-release previews, and promotional offers remain in their original feature mock files. The demo login seed stays in `src/features/auth/services/mock-auth-adapter.ts`. These are not part of the centralized table data.
+### Weights and ranking
 
-Import individual collections from the existing feature paths or the complete fixture set from `@/lib/mock-data`. The supplied snake_case fields and short IDs are retained for fixture compatibility; these are not database seed records or UUIDs.
+**Low**, **Med**, and **High** map to weights **1**, **2**, and **3**. The defaults are view 3, legroom 2, sound 3, exit 1, and quiet 2.
 
-The fixtures provide the default movie/venue catalog, generated physical seats and inventory,
-reference users, bookings, booking-seat price snapshots, and mock payments. Current fixture
-sizes and dates are described below. Reference users have no passwords and are separate
-from mock Auth accounts. Customer history is filtered by Auth ID.
+```text
+seat score = Σ(feature score × preference weight) / Σ(available preference weights)
+group score = round(average seat score across the requested adjacent seats)
+```
 
-## Dynamic mock homepage
+For example, feature scores of 90, 80, 70, 60, and 80 with the default weights produce a seat score of `860 / 11 ≈ 78.18`.
 
-`src/features/home/services/home-content-service.ts` joins feature-owned fixtures into the homepage content model. `HomeExperience` shares city, Indian calendar date, search, and showtime selection across cards, results, theater counts, and the auditorium. The hero uses catalog records; benefits, upcoming releases, and active offers come from feature mock files.
+The algorithm:
 
-Only future fixture showtimes are listed. Dates use Asia/Kolkata; expired schedules show empty states instead of fabricated availability. Seat prices and status come from showtime inventory, and rows come from physical screen seats. Hold expiry is rechecked every 30 seconds. Selecting another show resets selected seats. Preview actions never modify booking, payment, or inventory records. Missing posters use an accessible fallback.
+1. Excludes booked seats and unexpired holds for the selected showtime.
+2. Builds groups in the same row with consecutive physical column positions.
+3. Rejects incomplete groups, so recommendations do not cross missing-seat gaps or row boundaries.
+4. Computes the group's average weighted score.
+5. Sorts by score, breaking ties by the first seat label, and returns the best group.
 
-## Expanded mock database
+If no group fits, the UI suggests reducing the quantity or choosing seats manually. Recommendations never reserve seats or create bookings; the score is guidance, not a guarantee of an objectively perfect seat.
 
-All table fixtures remain in `src/lib/mock-data.ts`. Movie and venue names are demo content;
-show schedules and occupancy are fictional, not verified cinema listings. Auth is separate.
+Implementation: [feature scores](src/features/recommendations/services/seat-feature-scores.ts), [group ranking](src/features/recommendations/services/recommend-seats.ts), and [preference storage](src/features/recommendations/services/seat-preference-storage.ts).
 
-The fixed schedule spans **7–20 November 2026** in **Asia/Kolkata**. It contains 30 active
-movies (plus inactive m9), 20 theaters in 8 cities, 45 screens, 2,516 showtimes, 2,826 physical
-seats, 158,028 show-seat records, 5 reference users, 60 bookings, 177 booking-seat snapshots,
-and 60 mock payments. Legacy IDs and the original booking references are retained.
+## Mock data and persistence
 
-Edit `MOCK_SCHEDULE_START`, `MOCK_SCHEDULE_DAYS`, movie/venue records and screen layouts
-in the central file. The original sh1–sh10 records are preserved; generated shows skip any
-conflicting interval. Four daily slots rotate suitable language catalogs with evening/weekend
-price adjustments. Inventory uses a stable hash, including lightly occupied and sold-out shows.
-Booking assignments override background occupancy; cancelled/expired bookings release seats.
-Holds are fixed timestamps before their show, and the availability service releases them on expiry.
-The schedule does not roll forward automatically; after its dates pass, future-only views empty.
-Generic poster artwork is bundled for titles without an existing local poster.
+### One shared editable dataset
 
-Run `npm run validate:mock` to verify IDs, relationships, schedule overlaps, all city/date
-combinations, inventory completeness, occupancy scenarios, booking/payment totals, expiry,
-legacy references and deterministic regeneration. The default reference time is
-`2026-11-06T09:30:00Z`; set `MOCK_VALIDATE_AT` to explicitly check a different evaluation time.
-The fixture validator expects raw pending holds to be future at that evaluation time, while
-runtime availability always resolves expired holds using the actual request/browser clock.
+[src/lib/mock-data.ts](src/lib/mock-data.ts) remains the original default seed source. Feature mock files re-export those records. The editable browser dataset is initialized from these seeds and managed by [src/features/mock-data](src/features/mock-data).
 
-For the larger dataset, the home page omits seat inventory; movie and seat pages scope it to
-the selected movie. The shared browser store loads the catalog locally so evaluator changes also work on customer pages.
+| Storage key | Purpose |
+| --- | --- |
+| `bookmymovie_mock_data` | Shared versioned movies, theaters, screens, showtimes, seats, bookings, and reference users |
+| `bookmymovie_bookings` | Legacy booking archive; imported only when the shared dataset is missing |
+| `bookmymovie.demo-auth.v1` | Mock login accounts with salted password verifiers |
+| `bookmymovie.demo-session.v1` | Current mock login identity |
+| `bookmymovie:seat-preferences:<encoded-user-id>` | Validated seat priorities and usual quantity for that user |
 
-Booking discovery displays seven calendar days beginning with the earliest upcoming demo
-show. The underlying 14-day fixtures remain available for integrity checks. Book Tickets
-requires the existing mock login, and direct seat-selection URLs use the existing AuthGate.
-This is demo UI access control only; it does not authorize any server-side database operation.
+Customer discovery, seat selection, confirmation, and booking history use the same shared store as the dashboard. Components subscribe through the provider/hook rather than accessing localStorage individually. The initial server render uses a loading state until browser data is available, avoiding mismatches between static defaults and saved evaluator changes.
 
-After a normal login, a dismissible seat-preferences modal lets the user save their five
-seat priorities and usual ticket count. Booking-initiated login skips this prompt and returns
-to the chosen booking destination. Preferences are validated, versioned and stored per Auth
-user ID in localStorage (`bookmymovie:seat-preferences:<encoded-user-id>`). They remain in
-that browser after logout and initialize the booking controls on the next visit. Restoring an
-existing session does not reopen the modal. Closing the modal without saving preserves the
-previous values; blocked storage is reported with retry feedback.
+The large show-seat table is derived rather than persisted as a second mutable copy. Availability combines:
 
-## Browser-only booking confirmation
+- Physical seats belonging to the selected screen.
+- Independent seeded booked/held statuses, with expired holds released.
+- Current `CONFIRMED` bookings for that specific showtime.
 
-`Confirm Booking` rechecks the authenticated mock user, showtime, seat inventory, and all
-confirmed browser bookings before saving. `bookmymovie_mock_data` is the shared catalog and booking key;
-seat availability is derived from its confirmed bookings plus independent seeded occupancy.
-No separate availability key or payment record is written. Booking records include immutable
-movie/venue/showtime details and seat-price snapshots, so success pages and My Bookings
-remain readable after the fixed discovery dates pass. History is filtered by the existing Auth
-user ID; all confirmations in this browser affect availability for their specific showtime.
+Only confirmed bookings reserve seats in the editable dataset. Cancelling or deleting a booking releases its assignments. `PENDING_PAYMENT`, `CANCELLED`, and `EXPIRED` bookings do not reserve seats. Inventory for newly created shows/seats derives from the show base price, with supplements of ₹50 for premium seats and ₹120 for recliners.
 
-Same-tab repeat clicks use an idempotency ID. When Web Locks are supported, read/check/write
-is serialized across same-origin tabs; other tabs receive storage events. Browsers without
-Web Locks fall back to a synchronous local read/check/write and cannot guarantee atomic
-cross-tab writes. This is frontend-only demo state, not server authorization or a real reservation;
-different browser profiles have independent data. Clearing storage removes confirmations.
-Malformed booking data blocks confirmation instead of being silently overwritten. Storage
-write failures leave the booking unconfirmed. No gateway or payment integration is involved.
+### Booking integrity within this browser
 
-Run `npm run validate:bookings` for behavioral checks covering confirmation, seat conflicts,
-per-show availability, idempotent/competing requests, persistence and storage/session errors.
+Confirmation re-reads the current store, checks the mock user and showtime, validates the selected seats, derives prices from inventory, and saves a `CONFIRMED` booking. Display details and seat prices are stored as snapshots so history remains readable after catalog changes or the discovery window expires.
 
+Request IDs prevent duplicate confirmations. Where available, Web Locks serialize same-origin tab updates; storage events refresh other tabs. Without Web Locks, cross-tab atomicity is not guaranteed. Different browsers/profiles have independent data: this is not database-backed concurrency control.
 
-## Evaluator dashboard: `/dev/mock-data`
+Malformed data blocks writes instead of being silently discarded. Failed storage/quota writes leave the previous dataset intact. There is no separate mutable seat-availability store and no payment record is created by confirmation.
 
-Open `/dev/mock-data` without signing in. The Movies, Theaters, Screens, Showtimes,
-Seats, Bookings and Mock Users tables support search, filtering, pagination and record
-forms. Nested screen layout arrays use validated JSON fields. IDs cannot change on edit.
-Foreign references, dimensions, prices, dates/timezones, overlapping active shows,
-seat ownership, duplicate confirmations and booking totals are validated before saving.
-Deleting referenced records is blocked; remove dependents explicitly first. Destructive
-operations require confirmation. Screen capacity follows the physical seat records.
-New screens start with zero seats; add physical seats in the Seats tab. New showtime
-inventory is generated from those seats and the show's base price (premium +50,
-recliner +120). Customer discovery retains its upcoming one-week window.
+## Evaluator dashboard
 
-`src/features/mock-data` owns the versioned persistence, validation, editing operations,
-inventory derivation, provider and UI. The original `src/lib/mock-data.ts` constants are
-unchanged defaults. The store holds the seven editable collections, not the large generated
-show-seat table. Booking-seat snapshots from the static defaults are adapted into the
-existing browser ticket type. Independent seeded booked/held inventory stays intact;
-booking-owned inventory is derived only from current CONFIRMED bookings. Cancelling or
-deleting one releases its assignments. Pending, expired and cancelled bookings do not
-reserve seats. The legacy `bookmymovie_bookings` key is read only when the new key is
-missing; existing confirmations are migrated into the shared dataset on its first write.
-The old key is retained as a recovery copy and is never read after a shared store exists.
+Open **[/dev/mock-data](http://localhost:3000/dev/mock-data)** without signing in.
 
-Mock Users are reference profiles, not login accounts. Existing Auth IDs are reused and
-registered when a customer confirms a booking. Editing reference profiles does not alter
-passwords, sessions or Auth UI. Payments remain unchanged static fixtures and are not
-created by this dashboard or by booking confirmation. Ticket details/prices are snapshots;
-changing catalog metadata does not retroactively rewrite already saved customer tickets.
-Server metadata uses defaults because browser storage is unavailable to the server.
+The dashboard provides seven tables: **Movies, Theaters, Screens, Showtimes, Seats, Bookings, and Mock Users**.
 
-Export JSON downloads a versioned full editable dataset. Import JSON validates the complete
-export before asking to replace the current store. Export a backup before import/reset.
-Malformed or unsupported versions are never silently overwritten: use recovery export,
-then explicitly reset or import a compatible export. Reset replaces evaluator changes and
-browser bookings with the original defaults, preserving login accounts and seat preferences.
-Quota/write errors preserve the old store. Web Locks serialize same-origin tab mutations
-where supported; without Web Locks, cross-tab atomicity is not guaranteed. This is browser-
-local demo data only, not a production admin system or cross-browser synchronization.
+- Search across fields, use entity filters where available, and page through large collections.
+- Create/edit records through dialogs. Stable IDs are read-only when editing.
+- Edit nested screen layout arrays through validated JSON fields; coordinates are zero-based.
+- Validate required fields, dates/timezones, numeric values, foreign references, seat ownership, capacity, overlapping active showtimes, and duplicate confirmed seat assignments.
+- Require confirmation for deletion, import replacement, and reset. Referenced records are blocked; remove their dependents explicitly. There is no automatic cascade.
+- Export a versioned JSON backup, or import a compatible export after complete validation.
+- Recover malformed/outdated storage through recovery export followed by an explicit import or reset.
 
-Run `npm run validate:mock-dashboard` and `npm run validate:bookings` for behavioral checks.
-The original static-fixture validator currently reports its pre-existing m2 repeat-daily-show
-assertion; the dashboard does not modify those seed constants or weaken that validator.
+**Creating a screen:** New screens begin with zero physical seats. Add seat records in the Seats table; capacity follows the actual count. Layout changes do not automatically regenerate physical seats. Then create a non-overlapping showtime for the desired movie and screen.
+
+**Editing bookings:** Select an existing user and showtime, supply 1–6 distinct seat IDs from that screen, and choose a status. The editor derives movie/theater/screen references and price snapshots. Customer My Bookings reflects the current status for its existing Auth user ID.
+
+**Mock Users:** These are booking reference profiles, not login accounts. The demo Auth ID is included; custom Auth IDs are registered when those users confirm bookings. Editing a reference profile does not change credentials or sessions.
+
+**Reset:** Restores the default catalog and seed bookings, replacing evaluator changes and browser-created bookings. Login accounts and saved preferences remain. Export a backup first. Once the shared store exists, the legacy booking archive is not re-imported.
+
+## Validation
+
+```bash
+npm run lint
+npm run typecheck
+npm run validate:bookings
+npm run validate:mock-dashboard
+npm run build
+```
+
+| Command | Coverage |
+| --- | --- |
+| `lint` | ESLint checks |
+| `typecheck` | Strict TypeScript checks without emitting files |
+| `validate:bookings` | Confirmation, totals, invalid/unavailable seats, per-show isolation, idempotency, competing requests, persistence, and storage/session failures |
+| `validate:mock-dashboard` | CRUD and full screen/seat/show lifecycle, references, overlap/date/number validation, cancellation/deletion release, migration, import/export/reset, corrupt/versioned storage, quota failures, and serialized writes |
+| `build` | Production compilation and route generation |
+
+These commands passed during implementation. Desktop and mobile browser checks also covered dashboard edits appearing on customer routes, newly created movie routes, deletion protection, booking cancellation/reconfirmation, and availability after refresh. Behavioral validators use Node assertions and the existing TypeScript dependency; no additional test framework is required.
+
+An additional static-seed check is available:
+
+```bash
+npm run validate:mock
+```
+
+**Known failing check:** The unchanged seed dataset currently triggers `Movie without repeat daily theater showtimes: m2`. This is a pre-existing fixture scheduling assertion. It is not suppressed or reported as passing; the shared-store/booking validators above pass independently. The fixture validator defaults to `2026-11-06T09:30:00Z`; `MOCK_VALIDATE_AT` can select a different evaluation time.
+
+## Scope and limitations
+
+- Everything persists in this browser profile and origin only. Clearing site storage removes saved changes, mock accounts, preferences, and customer bookings.
+- Mock authentication and route guards demonstrate UX, not secure authorization. Use sample credentials only.
+- No real payment, email delivery, seat hold transaction, refund, or ticket issuance occurs.
+- The PostgreSQL/Prisma design is a future implementation target. This repository does not currently implement database transactions, database locks, payment webhooks, a production admin system, or a complete admin/analytics feature.
+- Independent seeded occupancy remains fixture-driven. The dashboard manages booking assignments, not a separate show-seat status editor.
+- Existing ticket snapshots are preserved; editing catalog/showtime metadata is not a full rescheduling workflow.
+- Server metadata uses default fixtures because it cannot read browser localStorage. Customer page content uses the persisted dataset after initialization.
+- Poster coverage varies. Missing images use the movie-card fallback; supported editor URLs are local asset paths or the configured Pollinations prompt URLs.
+
+## Useful entry points
+
+- [Application routes](src/lib/constants/routes.ts)
+- [Default seed records](src/lib/mock-data.ts)
+- [Shared mock store](src/features/mock-data/services/mock-data-store.ts)
+- [Dataset validation](src/features/mock-data/services/mock-data-validation.ts)
+- [Derived inventory](src/features/mock-data/services/mock-inventory.ts)
+- [Booking confirmation service](src/features/bookings/services/mock-booking-service.ts)
+- [Recommendation engine](src/features/recommendations/services/recommend-seats.ts)
+- [Mock authentication adapter](src/features/auth/services/mock-auth-adapter.ts)
