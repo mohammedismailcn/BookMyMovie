@@ -1,5 +1,6 @@
 "use client";
 
+import { LoadMoreBatch, useInfiniteBatch } from "@/components/shared/infinite-batch";
 import { useMemo } from "react";
 import { useMockBookings } from "@/features/bookings/hooks/use-mock-bookings";
 import { applyConfirmedBookings } from "@/features/bookings/services/booking-availability";
@@ -33,6 +34,7 @@ export function MovieTheaters({ content, movie, initialCity, initialDate }: {
   const [requestedDate, setDate] = useState(initialDate ?? "");
   const date = dates.some((day) => day.value === requestedDate) ? requestedDate : dates[0]?.value ?? "";
   const groups = browserBookings.loading || browserBookings.error ? [] : getMovieTheaterGroups(currentContent, movie.id, city, date, new Date(clock));
+  const batch = useInfiniteBatch(groups.map((group) => ({ ...group, id: group.theater.id })), JSON.stringify([movie.id, city, date]));
   function focusShows() {
     const heading = document.getElementById("movie-showtimes-heading");
     heading?.focus({ preventScroll: true });
@@ -64,13 +66,14 @@ export function MovieTheaters({ content, movie, initialCity, initialDate }: {
       {browserBookings.loading && <p role="status" className="my-5 text-sm">Checking browser seat availability…</p>}
       {browserBookings.error && <p role="alert" className="my-5 rounded-lg border p-4 text-sm text-destructive">{browserBookings.error}</p>}
       {!groups.length && !browserBookings.loading && !browserBookings.error && <div className="rounded-xl border bg-card p-8 text-center"><Ticket className="mx-auto size-8 text-primary" aria-hidden="true" /><h3 className="mt-3 font-semibold">No shows scheduled just yet</h3><p className="mt-2 text-sm text-muted-foreground">Try another city or check back for new showtimes.</p><Link href={ROUTES.home} className="mt-4 inline-block text-sm font-medium text-primary hover:underline">Explore other movies</Link></div>}
-      <div className="space-y-4">{groups.map(({ theater, screens }) => <article key={theater.id} className="overflow-hidden rounded-xl border border-border/60 bg-card sm:flex">
+      <div className="space-y-4">{batch.items.map(({ theater, screens }) => <article key={theater.id} className="overflow-hidden rounded-xl border border-border/60 bg-card sm:flex">
         <div className="border-b bg-muted/25 p-5 sm:w-72 sm:shrink-0 sm:border-b-0 sm:border-r sm:p-6"><h3 className="font-semibold">{theater.name}</h3><p className="mt-2 flex items-start gap-1.5 text-xs leading-5 text-muted-foreground"><MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />{theater.location}</p></div>
         <div className="min-w-0 flex-1 divide-y">{screens.map(({ screen, shows }) => <div key={screen.id} className="p-5 sm:p-6"><h4 className="mb-3 text-xs font-semibold">{screen.name}</h4><div className="flex flex-wrap gap-3">{shows.map(({ show, availability }) => {
           const label = availability.status === "SOLD_OUT" ? "Housefull" : availability.status === "UNAVAILABLE" ? "Unavailable" : `${availability.available} seats available`;
           return <div key={show.id} className="min-w-0 w-[calc(50%_-_0.375rem)] sm:w-auto sm:min-w-32"><Button nativeButton={availability.status !== "AVAILABLE"} render={availability.status === "AVAILABLE" ? <Link href={showtimeSeatsRoute(show.id)} /> : undefined} disabled={availability.status !== "AVAILABLE"} aria-label={`${time.format(new Date(show.starts_at))}, ${screen.name}, ${theater.name}, ${label}`} variant="outline" className="h-auto min-h-12 w-full flex-col gap-1 rounded-lg border-tertiary/30 px-4 py-2 text-tertiary hover:bg-tertiary/5 disabled:text-muted-foreground"><span className="font-semibold">{time.format(new Date(show.starts_at))}</span><span className="text-[10px]">{availability.status === "AVAILABLE" ? `From ₹${show.base_price}` : label}</span></Button><p className="mt-1.5 text-center text-[9px] text-muted-foreground">{availability.status === "AVAILABLE" ? `${availability.available} seats` : label}</p></div>;
         })}</div></div>)}</div>
       </article>)}</div>
+      <LoadMoreBatch hasMore={batch.hasMore} loadMore={batch.loadMore} label="theaters" />
       <p className="mt-5 text-[11px] leading-5 text-muted-foreground">Demo showtimes and inventory. Seat selections do not create a reservation.</p>
     </section>
   </>;

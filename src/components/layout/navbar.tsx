@@ -8,7 +8,6 @@ import Image from "next/image";
 const links = [
   ["Movies", ROUTES.movies],
   ["Theaters", ROUTES.theaters],
-  ["Offers", ROUTES.offers],
 ] as const;
 
 export function Navbar() {

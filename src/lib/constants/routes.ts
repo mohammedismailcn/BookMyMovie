@@ -39,6 +39,10 @@ export function showtimeSeatsRoute(showtimeId: string): string {
   return `/showtimes/${encodeURIComponent(showtimeId)}/seats`;
 }
 
+export function isMovieTheatersRoute(pathname: string): boolean {
+  return /^\/movies\/[a-zA-Z0-9-]+\/theaters$/.test(pathname);
+}
+
 export function isShowtimeSeatsRoute(pathname: string): boolean {
   return /^\/showtimes\/[a-zA-Z0-9-]+\/seats$/.test(pathname);
 }

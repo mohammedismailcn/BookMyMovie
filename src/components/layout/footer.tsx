@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { isBookingDestination, isShowtimeSeatsRoute, ROUTES } from "@/lib/constants/routes";
+import { isBookingDestination, isMovieTheatersRoute, isShowtimeSeatsRoute, ROUTES } from "@/lib/constants/routes";
 import Link from "next/link";
 import Image from "next/image";
 import { Clapperboard, Camera, Play } from "lucide-react";
@@ -55,6 +55,6 @@ export function FooterMain() {
 
 export function Footer() {
   const pathname = usePathname();
-  if (isShowtimeSeatsRoute(pathname)) return null;
+  if (isShowtimeSeatsRoute(pathname) || isMovieTheatersRoute(pathname)) return null;
   return <footer><FooterMain /></footer>;
 }
