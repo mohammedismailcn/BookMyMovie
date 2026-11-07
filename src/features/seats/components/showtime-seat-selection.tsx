@@ -137,7 +137,6 @@ export function ShowtimeSeatSelection({ content, show }: { content: HomeContent;
           <div className="min-w-0"><p className="text-[10px] text-muted-foreground">{selected.length} {selected.length === 1 ? "seat" : "seats"} selected</p><p className="text-lg font-semibold text-primary sm:text-xl" aria-live="polite">{money(total)}</p></div>
           <Button disabled={!selected.length || staleSelection || unavailable || submitting} onClick={confirmBooking} className="h-12 shrink-0 rounded-xl px-5 text-xs text-white sm:min-w-60 sm:text-sm">{submitting ? "Confirming…" : "Confirm Booking"}<ArrowRight aria-hidden="true" /></Button>
         </div>
-        <p className="mt-1.5 text-center text-[9px] text-muted-foreground">Browser-only demo · No payment is collected</p>
         {browserBookings.loading && <p role="status" className="mt-2 text-xs">Loading browser bookings…</p>}
         {browserBookings.error && <p role="alert" className="mt-2 text-xs leading-5 text-destructive">{browserBookings.error}</p>}
         {(message || staleSelection) && <p role="status" className="mt-2 text-xs leading-5 text-primary">{message || "Seat availability changed. Please review your selection."}</p>}
