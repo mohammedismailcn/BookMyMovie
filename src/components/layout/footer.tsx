@@ -15,7 +15,7 @@ export function FooterMain() {
   const pathname = usePathname();
   const bookingFlow = isBookingDestination(pathname);
   return (
-    <section aria-label="Site information" className={`bg-neutral text-neutral-foreground ${isShowtimeSeatsRoute(pathname) ? "pb-36" : ""}`}>
+    <section aria-label="Site information" className="bg-neutral text-neutral-foreground">
       {!bookingFlow && <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-8 sm:px-5 lg:grid-cols-4 lg:gap-12 lg:px-8">
         <div className="col-span-2 lg:col-span-1">
           <Link href="/" aria-label="BookMyMovie home" className="inline-block rounded-lg bg-white px-2">
@@ -54,5 +54,7 @@ export function FooterMain() {
 }
 
 export function Footer() {
+  const pathname = usePathname();
+  if (isShowtimeSeatsRoute(pathname)) return null;
   return <footer><FooterMain /></footer>;
 }
