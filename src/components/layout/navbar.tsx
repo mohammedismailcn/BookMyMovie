@@ -1,7 +1,7 @@
 "use client";
 import { usePathname } from "next/navigation";
 import { AccountMenu } from "@/features/auth/components/account-menu";
-import { isBookingDestination, ROUTES } from "@/lib/constants/routes";
+import { isBookingDestination, isShowtimeSeatsRoute, ROUTES } from "@/lib/constants/routes";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -11,7 +11,9 @@ const links = [
 ] as const;
 
 export function Navbar() {
-  const bookingFlow = isBookingDestination(usePathname());
+  const pathname = usePathname();
+  const bookingFlow = isBookingDestination(pathname);
+  if (isShowtimeSeatsRoute(pathname)) return null;
   return (
     <header className="border-b border-slate-100 bg-white">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-4 lg:flex-nowrap lg:gap-6 lg:px-8">

@@ -8,12 +8,13 @@ import { useAuth } from "@/features/auth/components/auth-provider";
 import { loadSeatPreferences } from "@/features/recommendations/services/seat-preference-storage";
 import { SeatPreferenceFields } from "@/features/recommendations/components/seat-preference-fields";
 import { ScreenSeatMap } from "@/features/seats/components/screen-seat-map";
+import { SeatCountModal } from "@/features/seats/components/seat-count-modal";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Armchair, ArrowLeft, ArrowRight, Check, ChevronDown, ShieldCheck, Volume2, X } from "lucide-react";
+import { Armchair, ArrowRight, ChevronDown, ChevronLeft, Volume2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MoviePoster } from "@/features/movies/components/movie-poster";
+
 import { getPreviewSeats, type HomeContent, type HomeShow } from "@/features/home/services/home-content-utils";
 import { getShowAvailability } from "@/features/showtimes/services/showtime-discovery";
 import { DEFAULT_SEAT_PREFERENCES, recommendSeats, type SeatPreferences } from "@/features/recommendations/services/recommend-seats";
@@ -33,10 +34,11 @@ export function ShowtimeSeatSelection({ content, show }: { content: HomeContent;
   const requestRef = useRef<{signature:string;id:string}|null>(null);
   const [submitting,setSubmitting]=useState(false);
   const preferenceUserId = user?.id;
-  const showtimeStrip = useRef<HTMLDivElement>(null);
+
   const [clock, setClock] = useState(content.asOf);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [quantity, setQuantity] = useState(2);
+  const [seatCountOpen, setSeatCountOpen] = useState(true);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   const [preferences, setPreferences] = useState<SeatPreferences>(DEFAULT_SEAT_PREFERENCES);
   const [message, setMessage] = useState("");
@@ -67,8 +69,8 @@ export function ShowtimeSeatSelection({ content, show }: { content: HomeContent;
     setMessage("");
     const current = selected.map((seat) => seat.id);
     if (current.includes(id)) setSelectedIds(current.filter((value) => value !== id));
-    else if (current.length < 6) setSelectedIds([...current, id]);
-    else setMessage("You can choose up to 6 seats per booking.");
+    else if (current.length < quantity) setSelectedIds([...current, id]);
+    else setMessage(`You have selected ${quantity} seats. Change the number of seats to add more.`);
   }
   async function confirmBooking() {
     if(submittingRef.current)return;
@@ -85,23 +87,19 @@ export function ShowtimeSeatSelection({ content, show }: { content: HomeContent;
   const otherShows = content.shows.filter((item) => item.movie_id === show.movie_id && item.city === show.city && Date.parse(item.starts_at) > at.getTime()).sort((a,b) => Date.parse(a.starts_at)-Date.parse(b.starts_at));
   const changeShow = movieTheatersRoute(show.movie_id, show.city);
   return <div className="min-w-0 w-full pb-32">
-    <Link href={changeShow} className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-sm font-medium text-primary hover:bg-primary/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"><ArrowLeft className="size-4" aria-hidden="true" />Back to showtimes</Link>
-    <nav aria-label="Booking progress" className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-card px-4 py-3 text-[10px] sm:text-xs">
-      <ol className="flex flex-wrap items-center gap-3 sm:gap-5">{["Movie", "Showtime", "Seats", "Confirmation"].map((step, index) => <li key={step} aria-current={index === 2 ? "step" : undefined} className={cn("flex items-center gap-1.5", index === 2 ? "font-semibold text-primary" : "text-muted-foreground")}><span className={cn("flex size-5 items-center justify-center rounded-full", index < 2 ? "bg-tertiary/10 text-tertiary" : index === 2 ? "bg-primary text-white" : "bg-indigo-50")}>{index < 2 ? <Check className="size-3" aria-hidden="true" /> : index + 1}</span>{step}</li>)}</ol>
-      <span className="flex items-center gap-1.5 rounded-full bg-primary/5 px-3 py-1.5 text-primary"><ShieldCheck className="size-3" aria-hidden="true" />Browser-only demo booking</span>
-    </nav>
+    <SeatCountModal open={seatCountOpen} quantity={quantity} onQuantityChange={setQuantity} onContinue={() => { setSelectedIds((ids) => ids.slice(0, quantity)); setSeatCountOpen(false); }} />
     <header className="mb-6 flex min-w-0 max-w-full flex-wrap items-center gap-3 rounded-xl bg-indigo-50 p-4 sm:gap-4 sm:px-6">
-      <div className="relative h-16 w-11 shrink-0 overflow-hidden rounded"><MoviePoster movie={show.movie} /></div>
-      <div className="min-w-0 flex-1"><h1 className="text-sm font-semibold sm:text-lg">{show.movie.title}</h1><p className="mt-1 text-[11px] font-medium">{show.theater.name} · {show.screen.name}</p><p className="mt-1 text-[10px] leading-5 text-muted-foreground">{new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(new Date(show.starts_at))} IST · {show.movie.language}</p></div>
-      <label htmlFor="seat-quantity" className="flex w-full items-center justify-between gap-3 rounded-lg border border-indigo-100 bg-white/80 px-3 py-2 text-xs font-medium sm:ml-auto sm:w-auto">Number of seats<select id="seat-quantity" value={quantity} disabled={submitting} onChange={(event) => { setQuantity(Number(event.target.value)); }} className="h-10 rounded-md border bg-background px-3">{[1, 2, 3, 4, 5, 6].map((value) => <option key={value}>{value}</option>)}</select></label>
+      <Link href={changeShow} aria-label="Back to showtimes" className="flex size-11 shrink-0 items-center justify-center rounded-md hover:bg-primary/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"><ChevronLeft className="size-6" aria-hidden="true" /></Link>
+      <div className="min-w-0 flex-1 break-words"><h1 className="text-sm font-semibold sm:text-lg">{show.movie.title}</h1><p className="mt-1 text-[11px] font-medium">{show.theater.name} · {show.screen.name}</p><p className="mt-1 text-[10px] leading-5 text-muted-foreground">{new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(new Date(show.starts_at))} IST · {show.movie.language}</p></div>
+      <Button type="button" variant="outline" disabled={submitting} onClick={() => setSeatCountOpen(true)} className="h-11 w-full gap-3 bg-white/80 text-xs sm:ml-auto sm:w-auto"><Armchair aria-hidden="true" />{quantity} {quantity === 1 ? "seat" : "seats"}<span className="text-primary">Change</span></Button>
       <nav aria-label="Switch showtime" className="w-full min-w-0 border-t border-indigo-100 pt-3">
         <p className="mb-2 text-[10px] font-medium text-muted-foreground">Showtimes in {show.city} · IST</p>
-        <div className="flex min-w-0 items-center gap-2"><Button type="button" size="icon" variant="outline" className="shrink-0" aria-label="Previous showtimes" onClick={()=>showtimeStrip.current?.scrollBy({left:-showtimeStrip.current.clientWidth*0.8,behavior:"smooth"})}><ArrowLeft aria-hidden="true" /></Button><div ref={showtimeStrip} className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{otherShows.map((item) => {
+        <div className="flex min-w-0 flex-wrap gap-2">{otherShows.map((item) => {
           const status = getShowAvailability(currentContent, item, at).status;
           const current = item.id === show.id;
           const label = new Intl.DateTimeFormat("en-IN", {timeZone:"Asia/Kolkata",day:"numeric",month:"short",hour:"numeric",minute:"2-digit"}).format(new Date(item.starts_at));
-          return <Button key={item.id} nativeButton={status!=="AVAILABLE"} render={status==="AVAILABLE" ? <Link href={showtimeSeatsRoute(item.id)} aria-current={current ? "page" : undefined} /> : undefined} disabled={status!=="AVAILABLE" || !storageReady} variant={current ? "default" : "outline"} aria-label={`${label} IST, ${item.theater.name}, ${item.screen.name}${current ? ", current show" : ""}`} className={cn("h-auto min-h-12 shrink-0 flex-col items-start gap-1 rounded-lg px-3 py-2 text-[10px]",current?"text-white":"bg-white")}><span className="font-semibold">{label}{current && " · Selected"}</span><span className={current?"text-white/80":"text-muted-foreground"}>{item.theater.name} · {item.screen.name}{status!=="AVAILABLE" ? status==="SOLD_OUT" ? " · Housefull" : " · Unavailable" : ""}</span></Button>;
-        })}</div><Button type="button" size="icon" variant="outline" className="shrink-0" aria-label="Next showtimes" onClick={()=>showtimeStrip.current?.scrollBy({left:showtimeStrip.current.clientWidth*0.8,behavior:"smooth"})}><ArrowRight aria-hidden="true" /></Button></div>
+          return <Button key={item.id} nativeButton={status!=="AVAILABLE"} render={status==="AVAILABLE" ? <Link href={showtimeSeatsRoute(item.id)} aria-current={current ? "page" : undefined} /> : undefined} disabled={status!=="AVAILABLE" || !storageReady} variant={current ? "default" : "outline"} aria-label={`${label} IST, ${item.theater.name}, ${item.screen.name}${current ? ", current show" : ""}`} className={cn("h-auto min-h-12 max-w-full flex-col items-start gap-1 whitespace-normal break-words rounded-lg px-3 py-2 text-[10px]",current?"text-white":"bg-white")}><span className="font-semibold">{label}{current && " · Selected"}</span><span className={current?"text-white/80":"text-muted-foreground"}>{item.theater.name} · {item.screen.name}{status!=="AVAILABLE" ? status==="SOLD_OUT" ? " · Housefull" : " · Unavailable" : ""}</span></Button>;
+        })}</div>
       </nav>
     </header>
     <div className="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -113,7 +111,7 @@ export function ShowtimeSeatSelection({ content, show }: { content: HomeContent;
           {recommendation && <p className="mb-4 flex flex-wrap items-center justify-center gap-2 text-[10px]"><span className="rounded-full bg-tertiary px-2.5 py-1 font-semibold text-white">Recommended</span><span>Seats {recommendation.seats.map((seat) => seat.label).join(", ")}</span></p>}
           <ScreenSeatMap screen={show.screen} seats={seats} selectedIds={selected.map((seat)=>seat.id)} recommendedIds={recommendation?.seats.map((seat)=>seat.id) ?? []} unavailable={unavailable || submitting} onToggle={toggleSeat} />
           <ul aria-label="Seat legend" className="mt-6 flex flex-wrap justify-center gap-x-4 gap-y-3 border-t pt-5 text-[9px] text-muted-foreground">{[{ label: "Available", style: "bg-indigo-50" }, { label: "Selected", style: "bg-primary" }, { label: "Booked / held", style: "bg-slate-100" }, { label: "Premium", style: "bg-secondary/50" }, { label: "Recommended", style: "bg-tertiary" }].map((item) => <li key={item.label} className="flex items-center gap-1.5"><span className={cn("size-3 rounded-sm", item.style)} />{item.label}</li>)}<li className="flex items-center gap-1.5"><Volume2 className="size-3 text-violet-800" aria-hidden="true" />Speaker zone</li><li>A · Accessible</li></ul>
-          <p className="mt-4 text-center text-[10px] text-muted-foreground">Select up to 6 seats. Swipe the seat map or use its arrow buttons to see all seats.</p>
+          <p className="mt-4 text-center text-[10px] text-muted-foreground">Select up to {quantity} {quantity === 1 ? "seat" : "seats"}. Swipe the seat map or use its arrow buttons to see all seats.</p>
         </section>
 
       </div>
