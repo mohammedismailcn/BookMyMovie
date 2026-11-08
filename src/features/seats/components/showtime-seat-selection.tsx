@@ -12,7 +12,7 @@ import { SeatCountModal } from "@/features/seats/components/seat-count-modal";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Armchair, ArrowRight, ChevronDown, ChevronLeft, Volume2, X } from "lucide-react";
+import { Armchair, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Volume2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { getPreviewSeats, type HomeContent, type HomeShow } from "@/features/home/services/home-content-utils";
@@ -32,6 +32,7 @@ export function ShowtimeSeatSelection({ content, show }: { content: HomeContent;
   const storageReady = !browserBookings.loading && !browserBookings.error;
   const submittingRef = useRef(false);
   const requestRef = useRef<{signature:string;id:string}|null>(null);
+  const showtimesRef = useRef<HTMLDivElement>(null);
   const [submitting,setSubmitting]=useState(false);
   const preferenceUserId = user?.id;
 
@@ -94,12 +95,16 @@ export function ShowtimeSeatSelection({ content, show }: { content: HomeContent;
       <Button type="button" variant="outline" disabled={submitting} onClick={() => setSeatCountOpen(true)} className="h-11 w-full gap-3 bg-white/80 text-xs sm:ml-auto sm:w-auto"><Armchair aria-hidden="true" />{quantity} {quantity === 1 ? "seat" : "seats"}<span className="text-primary">Change</span></Button>
       <nav aria-label="Switch showtime" className="w-full min-w-0 border-t border-indigo-100 pt-3">
         <p className="mb-2 text-[10px] font-medium text-muted-foreground">Showtimes in {show.city} · IST</p>
-        <div className="flex min-w-0 flex-wrap gap-2">{otherShows.map((item) => {
+        <div className="relative min-w-0 px-6">
+        <button type="button" aria-label="Previous showtimes" onClick={() => showtimesRef.current?.scrollBy({left:-200,behavior:"smooth"})} className="absolute left-0 top-1/2 z-10 flex h-11 w-6 -translate-y-1/2 items-center justify-center rounded-md bg-card focus-visible:outline-2 focus-visible:outline-ring"><ChevronLeft className="size-4" aria-hidden="true" /></button>
+        <div ref={showtimesRef} className="flex min-w-0 max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{otherShows.map((item) => {
           const status = getShowAvailability(currentContent, item, at).status;
           const current = item.id === show.id;
           const label = new Intl.DateTimeFormat("en-IN", {timeZone:"Asia/Kolkata",day:"numeric",month:"short",hour:"numeric",minute:"2-digit"}).format(new Date(item.starts_at));
-          return <Button key={item.id} nativeButton={status!=="AVAILABLE"} render={status==="AVAILABLE" ? <Link href={showtimeSeatsRoute(item.id)} aria-current={current ? "page" : undefined} /> : undefined} disabled={status!=="AVAILABLE" || !storageReady} variant={current ? "default" : "outline"} aria-label={`${label} IST, ${item.theater.name}, ${item.screen.name}${current ? ", current show" : ""}`} className={cn("h-auto min-h-12 max-w-full flex-col items-start gap-1 whitespace-normal break-words rounded-lg px-3 py-2 text-[10px]",current?"text-white":"bg-white")}><span className="font-semibold">{label}{current && " · Selected"}</span><span className={current?"text-white/80":"text-muted-foreground"}>{item.theater.name} · {item.screen.name}{status!=="AVAILABLE" ? status==="SOLD_OUT" ? " · Housefull" : " · Unavailable" : ""}</span></Button>;
+          return <Button key={item.id} nativeButton={status!=="AVAILABLE"} render={status==="AVAILABLE" ? <Link href={showtimeSeatsRoute(item.id)} aria-current={current ? "page" : undefined} /> : undefined} disabled={status!=="AVAILABLE" || !storageReady} variant={current ? "default" : "outline"} aria-label={`${label} IST, ${item.theater.name}, ${item.screen.name}${current ? ", current show" : ""}`} className={cn("h-auto min-h-12 w-40 shrink-0 flex-col items-center justify-center gap-1 whitespace-normal break-words rounded-lg px-2 py-2 text-center text-[10px] sm:w-44 sm:px-3",current?"text-white":"bg-white")}><span className="font-semibold">{label}{current && " · Selected"}</span><span className={current?"text-white/80":"text-muted-foreground"}>{item.theater.name} · {item.screen.name}{status!=="AVAILABLE" ? status==="SOLD_OUT" ? " · Housefull" : " · Unavailable" : ""}</span></Button>;
         })}</div>
+        <button type="button" aria-label="Next showtimes" onClick={() => showtimesRef.current?.scrollBy({left:200,behavior:"smooth"})} className="absolute right-0 top-1/2 z-10 flex h-11 w-6 -translate-y-1/2 items-center justify-center rounded-md bg-card focus-visible:outline-2 focus-visible:outline-ring"><ChevronRight className="size-4" aria-hidden="true" /></button>
+        </div>
       </nav>
     </header>
     <div className="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -117,7 +122,7 @@ export function ShowtimeSeatSelection({ content, show }: { content: HomeContent;
       </div>
       <aside className="min-w-0 space-y-5 lg:sticky lg:top-5" aria-label="Seat recommendations and booking summary">
         <section className="rounded-2xl border border-border/40 bg-card p-5 sm:p-6"><h2 className="mt-2 text-lg font-semibold">Find Your Best Seats</h2><p className="mt-1 text-[10px] leading-5 text-muted-foreground">Adjust what matters to you. We suggest adjacent seats using this screen layout and seat data.</p>
-          <Button type="button" variant="outline" aria-expanded={preferencesOpen} aria-controls="booking-preference-options" onClick={() => setPreferencesOpen(!preferencesOpen)} className="mt-4 h-11 w-full justify-between lg:hidden">Seat preferences<ChevronDown aria-hidden="true" className={cn("transition-transform", preferencesOpen && "rotate-180")} /></Button>
+          <Button type="button" variant="outline" aria-expanded={preferencesOpen} aria-controls="booking-preference-options" onClick={() => setPreferencesOpen(!preferencesOpen)} className="mt-4 h-11 w-full justify-center sm:justify-between lg:hidden">Seat preferences<ChevronDown aria-hidden="true" className={cn("transition-transform", preferencesOpen && "rotate-180")} /></Button>
           <div id="booking-preference-options" className={cn("lg:block", preferencesOpen ? "block" : "hidden")}><fieldset className="min-w-0" disabled={submitting}><SeatPreferenceFields preferences={preferences} onChange={setPreferences} namePrefix="booking-preferences" /></fieldset></div>
           <div className="mt-4 rounded-xl border border-tertiary/15 bg-tertiary/5 p-4">{recommendation ? <><div className="flex flex-wrap items-center justify-between gap-2"><span className="rounded-full bg-tertiary px-2 py-1 text-[9px] font-semibold text-white">{recommendation.score}/100 preference match</span><strong className="text-sm">{money(recommendation.seats.reduce((sum, seat) => sum + seat.price, 0))}</strong></div><h3 className="mt-3 text-sm font-semibold">Seats {recommendation.seats.map((seat) => seat.label).join(", ")}</h3><p className="mt-2 text-[10px] leading-5 text-muted-foreground">An available group in the same row, ranked using this screen layout, seat legroom, speaker balance, exit distance, and quieter-zone preferences. Scores are guidance, not a guarantee.</p><Button disabled={submitting} onClick={() => { setSelectedIds(recommendation.seats.map((seat) => seat.id)); setMessage("Recommended seats selected."); }} className="mt-3 h-auto min-h-10 w-full whitespace-normal rounded-full text-[10px] text-white"><Armchair aria-hidden="true" />Select Recommended Seats</Button></> : <p className="text-xs leading-6">No available group of {quantity} adjacent seats. Try fewer seats or choose individually from the map.</p>}</div>
         </section>

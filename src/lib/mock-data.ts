@@ -389,12 +389,15 @@ const extraBookingFixtures = Array.from({ length: 57 }, (_, index) => {
     amount: booking.total_amount, currency: "INR", created_at: booking.created_at, updated_at: booking.updated_at };
   return { booking, assignments, payment };
 });
-export const bookings: readonly BookingFixture[] = [...originalBookings, ...extraBookingFixtures.map((item) => item.booking)];
-export const booking_seats = [...originalBookingSeats, ...extraBookingFixtures.flatMap((item) => item.assignments)];
-export const payments = [...originalPayments, ...extraBookingFixtures.map((item) => item.payment)];
+const activeBookingFixtures = extraBookingFixtures.slice(0, 15);
+// Older browser exports may still contain these sample bookings.
+export const legacyBookingSeatIds = extraBookingFixtures.flatMap(item => item.assignments.map(assignment => assignment.show_seat_id));
+export const bookings: readonly BookingFixture[] = [...originalBookings, ...activeBookingFixtures.map((item) => item.booking)];
+export const booking_seats = [...originalBookingSeats, ...activeBookingFixtures.flatMap((item) => item.assignments)];
+export const payments = [...originalPayments, ...activeBookingFixtures.map((item) => item.payment)];
 
 // ========================================================================
-// Deterministic occupancy: empty, light, moderate, busy, nearly full and sold out.
+// Mostly light occupancy, with rare busy and sold-out examples.
 // Holds expire before their show; never randomize on render or import.
 // ========================================================================
 function stableHash(value: string): number {
@@ -402,14 +405,16 @@ function stableHash(value: string): number {
 }
 const bookingById = new Map(bookings.map((booking) => [booking.id, booking]));
 const assignmentByInventory = new Map(booking_seats.map((assignment) => [assignment.show_seat_id, assignment]));
+const legacyAssignments = new Set(legacyBookingSeatIds);
 export const show_seats: ShowSeat[] = showtimes.flatMap((show) => {
-  const profile = stableHash(show.id) % 20;
-  const occupancy = profile === 0 ? 100 : profile < 4 ? 5 : profile < 10 ? 40 : profile < 16 ? 72 : 94;
+  const profile = stableHash(show.id) % 100;
+  const occupancy = profile === 0 ? 100 : profile === 1 ? 75 : profile < 30 ? 5 : profile < 70 ? 15 : 30;
   return (seatsByScreen.get(show.screen_id) ?? []).map((seat) => {
     const id = `${show.id}-${seat.id}`;
     const roll = stableHash(id) % 100;
-    let status: ShowSeat["status"] = roll < occupancy ? "BOOKED" : roll < Math.min(100, occupancy + 3) ? "HELD" : "AVAILABLE";
+    let status: ShowSeat["status"] = roll < occupancy ? "BOOKED" : roll < Math.min(100, occupancy + 1) ? "HELD" : "AVAILABLE";
     let held_until: string | null = status === "HELD" ? new Date(Date.parse(show.starts_at) - 15 * 60000).toISOString() : null;
+    if (legacyAssignments.has(id)) { status = "AVAILABLE"; held_until = null; }
     const assignment = assignmentByInventory.get(id);
     if (assignment) {
       const booking = bookingById.get(assignment.booking_id);

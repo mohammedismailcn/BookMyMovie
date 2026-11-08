@@ -37,7 +37,7 @@ assert.throws(()=>putMockRecord(defaults,"movies",{...original,duration_minutes:
 assert.throws(()=>putMockRecord(defaults,"movies",{...original,release_date:"2026-02-30"},original),/release date/);
 assert.throws(()=>putMockRecord(defaults,"seats",{...defaults.seats[0],id:"seat-duplicate"}),/coordinates/);
 assert.throws(()=>validateMockDatabase({...defaults,screens:defaults.screens.map((s,i)=>i===0?{...s,capacity:999}:s)}),/capacity/);
-const first = defaults.bookings.find(b=>b.status==="CONFIRMED");
+const first = defaults.bookings.find(b=>b.status==="CONFIRMED" && buildMockInventory(defaults,new Set([b.showtime_id])).some(s=>s.status==="BOOKED"&&!b.seat_ids.includes(s.seat_id)));
 assert.ok(first);
 const ids = new Set([first.showtime_id]);
 const beforeInventory = buildMockInventory(defaults,ids);

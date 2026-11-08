@@ -142,9 +142,12 @@
     }
   body {
     @apply bg-background text-foreground;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: clip;
     }
   html {
     @apply font-sans;
-    overflow-x: clip;
+    overflow-x: hidden;
     }
 }

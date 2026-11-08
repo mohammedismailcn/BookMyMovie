@@ -3,7 +3,7 @@ import type { MockDatabase } from "@/features/mock-data/types/mock-database";
 import type { ShowSeat } from "@/features/showtimes/types/show-seat-types";
 
 const inventory = new Map(seed.show_seats.map(item => [item.id, item]));
-const assignments = new Set(seed.booking_seats.map(item => item.show_seat_id));
+const assignments = new Set([...seed.booking_seats.map(item => item.show_seat_id), ...seed.legacyBookingSeatIds]);
 /** Preserve independent seeded occupancy; booking-owned occupancy comes only from current confirmed bookings. */
 export function buildMockInventory(database: MockDatabase, showIds: ReadonlySet<string>): ShowSeat[] {
   const confirmed = new Set(database.bookings.filter(item => item.status === "CONFIRMED").flatMap(item => item.seat_ids.map(id => `${item.showtime_id}-${id}`)));

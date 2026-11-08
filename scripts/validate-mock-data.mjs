@@ -49,7 +49,7 @@ const paymentsByBooking = groupBy(payments, "booking_id");
 const cities = new Set(theaters.map((theater) => theater.location.split(",").at(-1).trim()));
 assert.equal(movies.filter((movie) => movie.is_active).length, 30);
 assert.equal(theaters.length, 20); assert.equal(screens.length, 45); assert.equal(cities.size, 8);
-assert.ok(showtimes.length >= 500); assert.ok(bookings.length >= 50);
+assert.ok(showtimes.length >= 500); assert.equal(bookings.length, 18);
 for (const movie of movies) {
   assert.ok(movie.duration_minutes > 0 && Number.isFinite(Date.parse(movie.release_date)), movie.id);
   if (movie.poster_url.startsWith("/")) {
